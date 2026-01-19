@@ -3,7 +3,7 @@
     // Environment setup & latest features
     "lib": [
       "ESNext", 
-      "DOM"  // For VSCode code completion
+      "DOM",  // For VSCode code completion
     ],
     "target": "ESNext",
     "module": "Preserve",
@@ -11,7 +11,8 @@
     "jsx": "react-jsx",
     "allowJs": true,
     "types": [
-      "@webgpu/types"  // For VSCode code completion
+      "@webgpu/types",  // For VSCode code completion
+      "@types/bun",  // For VSCode code completion
     ],
 
     // Bundler mode

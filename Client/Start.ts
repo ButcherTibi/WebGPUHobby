@@ -93,12 +93,38 @@ async function step(timestamp_ms: DOMHighResTimeStamp)
 	// Render
 	await render(renderer, scene)
 
-	requestAnimationFrame(step)
+	// requestAnimationFrame(step)
 }
 
+const ShaderCodeRequestType = {
+    request_any: 0,
+    request_only_latest: 1,
+}
+
+interface ShaderCodeRequest {
+    name: string
+    type: number
+}
+
+async function requestShaderCode() {
+	let req_body: ShaderCodeRequest = {
+		name: "Shader.wgsl",
+		type: ShaderCodeRequestType.request_only_latest
+	}
+
+	let req: RequestInit = {
+		method: "POST",
+		mode: "same-origin",
+		body: JSON.stringify(req_body)
+	}
+
+	await fetch("/shader_code", req)
+}
 
 async function main() {
 	renderer = new Renderer()
+
+	setInterval(requestShaderCode, 2000)
 
 	requestAnimationFrame(step)
 }
