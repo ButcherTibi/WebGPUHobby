@@ -1,0 +1,43 @@
+async function copyBufferData(src_buff: GPUBuffer, dst_buff: GPUBuffer) {
+    await src_buff.mapAsync(GPUMapMode.READ)
+    await dst_buff.mapAsync(GPUMapMode.WRITE)
+
+    let src_data = new Int32Array(src_buff.getMappedRange());
+    let dst_data = new Int32Array(dst_buff.getMappedRange());
+    dst_data.set(src_data);
+
+    src_buff.unmap();
+    dst_buff.unmap();
+}
+
+class UploadBuffer {
+    buffer: GPUBuffer | undefined;
+    usage = GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_READ | 
+        GPUBufferUsage.COPY_DST  | GPUBufferUsage.MAP_WRITE;
+
+
+    async resize(new_size: number) {
+        if (this.buffer != undefined && this.buffer.size < new_size) {
+            
+            let src_buff = this.buffer;
+            let dst_buff = Globals.device.createBuffer({
+                size: new_size,
+                usage: this.buffer.usage
+            });
+
+            await copyBufferData(src_buff, dst_buff);
+
+            this.buffer = dst_buff;
+            src_buff.destroy();
+        }
+        else if (this.buffer != undefined && this.buffer.size >= new_size) {
+            // do nothing, buffer is already big enough
+        }
+        else if (this.buffer == undefined) {
+            this.buffer = Globals.device.createBuffer({
+                size: new_size,
+                usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE
+            });
+        }
+    }
+}
