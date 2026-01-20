@@ -12,6 +12,12 @@ import { command } from "./Command";
 import { Scene } from "./Start";
 
 
+export class Shader {
+    update = true  // should the shader module be recreated
+    code: string = ""
+    module: GPUShaderModule | undefined
+}
+
 export class Renderer {
     // Device
     device_found = false
@@ -26,7 +32,7 @@ export class Renderer {
     presentationFormat: GPUTextureFormat | undefined;
 
     // Shaders
-    shader_module: GPUShaderModule | undefined
+    shader_modules = new Map<string, Shader>()
 
     // Buffers
     perspective_matrix_buff: GPUBuffer | undefined
@@ -39,6 +45,7 @@ export class Renderer {
     // 
 
     // Cached Configuration
+    update_pipeline = true
     pipeline: GPURenderPipeline | undefined
     bindGroup: GPUBindGroup | undefined
     descriptor: GPURenderPassDescriptor | any
@@ -103,3 +110,5 @@ export async function render(r: Renderer, scene: Scene) {
 
     command(r)
 }
+
+export { updateShader } from "./Shaders"

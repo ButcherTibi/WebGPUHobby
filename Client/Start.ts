@@ -1,4 +1,4 @@
-import { Renderer, render } from "./Renderer";
+import { Renderer, render, updateShader } from "./Renderer";
 import { vec3, vec4 } from "wgpu-matrix";
 import { fail } from "./Logging.ts"
 
@@ -93,7 +93,7 @@ async function step(timestamp_ms: DOMHighResTimeStamp)
 	// Render
 	await render(renderer, scene)
 
-	// requestAnimationFrame(step)
+	requestAnimationFrame(step)
 }
 
 const ShaderCodeRequestType = {
@@ -101,14 +101,47 @@ const ShaderCodeRequestType = {
     request_only_latest: 1,
 }
 
-interface ShaderCodeRequest {
-    name: string
+interface ShadersCodeRequest {
     type: number
 }
 
-async function requestShaderCode() {
-	let req_body: ShaderCodeRequest = {
-		name: "Shader.wgsl",
+interface ShadersCodeResponse {
+	status: number
+	shaders: ShaderCode[]
+}
+
+const Status = {
+    ok: 0,
+    no_change: 1,  // shader file did not change
+    failed_to_read: 2,
+}
+
+interface ShaderCode {
+	name: string
+	code: string
+}
+
+async function requestShaderCode_Any() {
+	let req_body: ShadersCodeRequest = {
+		type: ShaderCodeRequestType.request_any
+	}
+
+	let req: RequestInit = {
+		method: "POST",
+		mode: "same-origin",
+		body: JSON.stringify(req_body)
+	}
+
+	const response: Response = await fetch("/shader_code", req)
+	const res: ShadersCodeResponse = await response.json()
+
+	res.shaders.forEach((shader) => {
+		updateShader(shader.name, shader.code, renderer)
+	})
+}
+
+async function requestShaderCode_OnlyLatest() {
+		let req_body: ShadersCodeRequest = {
 		type: ShaderCodeRequestType.request_only_latest
 	}
 
@@ -118,13 +151,20 @@ async function requestShaderCode() {
 		body: JSON.stringify(req_body)
 	}
 
-	await fetch("/shader_code", req)
+	const response: Response = await fetch("/shader_code", req)
+	const res: ShadersCodeResponse = await response.json()
+
+	res.shaders.forEach((shader) => {
+		updateShader(shader.name, shader.code, renderer)
+	})
 }
 
 async function main() {
 	renderer = new Renderer()
 
-	setInterval(requestShaderCode, 2000)
+	await requestShaderCode_Any()
+
+	setInterval(requestShaderCode_OnlyLatest, 2000)
 
 	requestAnimationFrame(step)
 }

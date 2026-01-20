@@ -1,16 +1,30 @@
-import { Renderer } from "./Renderer"
+import { Renderer, Shader } from "./Renderer"
 
 // Shader Code
-import shader_code from "./Shader Code/Shader.wgsl" with { type: "text" };
+//import shader_code from "./Shader Code/Shader.wgsl" with { type: "text" };
 
+
+export function updateShader(name: string, code: string, r: Renderer) {
+    let shader: Shader = {
+        update: true,
+        code: code,
+        module: undefined
+    }
+    r.shader_modules.set(name, shader)
+}
 
 export function createShaderModules(r: Renderer) {
-    if (r.shader_module !== undefined) {
-        return
-    }
+    r.shader_modules.forEach((shader, name) => {
+        if (shader.update) {
+            shader.module = r.device!.createShaderModule({
+                label: name,
+                code: shader.code
+            });
 
-    r.shader_module = r.device!.createShaderModule({
-		label: 'Main Shader',
-		code: shader_code
-	});
+            shader.update = false
+
+            // Signal pipeline to recreate
+            r.update_pipeline = true
+        }
+    })
 }

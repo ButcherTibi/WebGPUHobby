@@ -10,7 +10,8 @@ class ShaderFileInfo {
     changed: boolean = false
 }
 
-let shader_files = new Map<string, ShaderFileInfo>()
+var shader_file_infos = new Map<string, ShaderFileInfo>()
+
 
 export function startWatchingTheShaderCode() {
     const shader_code_dir = path.join(import.meta.dir, "Shader Code")
@@ -18,7 +19,8 @@ export function startWatchingTheShaderCode() {
     console.log(`Finding shader files in folder ${shader_code_dir}:`)
     readdirSync(shader_code_dir).forEach((shader_name) => {
         const file_path = path.join(shader_code_dir, shader_name)
-        shader_files.set(shader_name, {
+
+        shader_file_infos.set(shader_name, {
             file_path: file_path,
             changed: true
         })
@@ -26,16 +28,17 @@ export function startWatchingTheShaderCode() {
         console.log(`  ${shader_name}`)
     })
 
-    shader_code_watcher = watch(shader_code_dir, { recursive: true }, (event, shader_filename) => {
-        if (shader_filename == null) {
+    shader_code_watcher = watch(shader_code_dir, { recursive: true }, (event, shader_name) => {
+        if (shader_name == null) {
             return
         }
 
-        console.log(`Detected ${event} in ${shader_filename}`);
+        console.log(`Detected ${event} in ${shader_name}`);
+        const file_path = path.join(shader_code_dir, shader_name)
 
-        shader_files.set(shader_filename, {
-            file_path: shader_filename,
-            changed: true 
+        shader_file_infos.set(shader_name, {
+            file_path: file_path,
+            changed: true
         })
     })
 }
@@ -45,64 +48,63 @@ const ShaderCodeRequestType = {
     request_only_latest: 1,
 }
 
-interface ShaderCodeRequest {
-    name: string
+interface ShadersCodeRequest {
     type: number
+}
+
+interface ShadersCodeResponse {
+	status: number
+	shaders: ShaderCode[]
 }
 
 const Status = {
     ok: 0,
     no_change: 1,  // shader file did not change
-    not_found: 2,  // shader file not found
-    failed_to_read: 3,
+    failed_to_read: 2,
 }
 
-interface ShaderCodeResponse {
-    status: number
-    code: string
+interface ShaderCode {
+	name: string
+	code: string
 }
 
 export async function handleShaderCodeRequest(req: Bun.BunRequest<"/shader_code">, server: Bun.Server<undefined>) {
-    let shader_code_req: ShaderCodeRequest = await req.json()
-    
-    const file_info = shader_files.get(shader_code_req.name)
-
-    let res_body: ShaderCodeResponse = {
+    let shaders_req: ShadersCodeRequest = await req.json()
+    let res_body: ShadersCodeResponse = {
         status: Status.ok,
-        code: ""
-    }
-    if (file_info === undefined) {
-        res_body.status = Status.not_found
-        return new Response(JSON.stringify(res_body))
+        shaders: []
     }
 
-    const shaderCodeToResponse = async () => {
-        res_body.status = Status.ok
-            
+    const readShaderCode = (file_info: ShaderFileInfo, name: string) => {
+        let code = ""
         try {
-            res_body.code = await readFileSync(file_info.file_path, "utf-8")
+            code = readFileSync(file_info.file_path, "utf-8")
         } catch (e: any) {
+            console.log(`Failed to read shader: ${name} at path ${file_info.file_path}`)
             res_body.status = Status.failed_to_read
+            return new Response(JSON.stringify(res_body))
         }
 
-        if (res_body.status == Status.ok) {
-            // Acknowledge
-            file_info.changed = false
-        }
+        res_body.shaders.push({ name, code })
+
+        // Acknowledge
+        file_info.changed = false
     }
 
-    if (shader_code_req.type == ShaderCodeRequestType.request_any) {
-        await shaderCodeToResponse()
-    }
-    else if (shader_code_req.type == ShaderCodeRequestType.request_only_latest) {
+    shader_file_infos.forEach((file_info, name) => {
+        if (shaders_req.type == ShaderCodeRequestType.request_only_latest) {
+            if (file_info.changed) {
+                // console.log('new shader read')
+                readShaderCode(file_info, name)
+            }
+        }
+        else if (shaders_req.type == ShaderCodeRequestType.request_any) {
+            readShaderCode(file_info, name)
+        }
+    })
 
-        if (file_info.changed) {
-            await shaderCodeToResponse()
-        }
-        else {
-            res_body.status = Status.no_change
-            // do not send code back
-        }
+    if (res_body.shaders.length == 0) {
+        res_body.status = Status.no_change
     }
 
     return new Response(JSON.stringify(res_body))
