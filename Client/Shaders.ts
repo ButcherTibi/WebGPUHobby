@@ -4,7 +4,7 @@ import { Renderer, Shader } from "./Renderer"
 //import shader_code from "./Shader Code/Shader.wgsl" with { type: "text" };
 
 
-export function updateShader(name: string, code: string, r: Renderer) {
+export function requestShaderUpdate(name: string, code: string, r: Renderer) {
     let shader: Shader = {
         update: true,
         code: code,
@@ -16,6 +16,7 @@ export function updateShader(name: string, code: string, r: Renderer) {
 export function createShaderModules(r: Renderer) {
     r.shader_modules.forEach((shader, name) => {
         if (shader.update) {
+            console.log(`Shader ${name} was reloaded`)
             shader.module = r.device!.createShaderModule({
                 label: name,
                 code: shader.code

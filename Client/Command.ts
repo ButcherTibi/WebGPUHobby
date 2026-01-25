@@ -12,7 +12,7 @@ export function command(r: Renderer) {
     const pass = encoder.beginRenderPass(r.descriptor);
     pass.setPipeline(r.pipeline!);
     pass.setBindGroup(0, r.bindGroup!);
-    pass.draw(r.vertex_count);
+    pass.draw(r.scene.mesh.vertex_count);
     pass.end();
 
     const commandBuffer = encoder.finish();

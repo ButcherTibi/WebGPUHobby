@@ -5,6 +5,13 @@ import type { Renderer } from "./Renderer";
 export function configurePerspectiveTransform_FixedFunction(fov_deg: number, aspect: number, near: number, far: number,
     r: Renderer) 
 {
+    if (r.perspective_matrix_buff == undefined) {
+        r.perspective_matrix_buff = r.device!.createBuffer({
+            size: 16 * 4,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+    }
+
     // 1. Setup Camera Parameters
     const fov = (fov_deg * Math.PI) / 180; // 60 degrees in radians
     // const aspect = scene.camera.screen_width / scene.camera.screen_height;

@@ -1,24 +1,23 @@
 import { fail } from "./Logging";
 
 // Sub Files
+import { findDevice } from "./FindDevice";
+import { bindToCanvas } from './BindToCanvas'
 import { createShaderModules } from "./Shaders"
-import { createBuffers } from "./Buffers";
 import { createCachedConfiguration } from "./CachedConfiguration";
 import { configurePerspectiveTransform_FixedFunction } from "./PerspectiveTransform_FixedFunction";
-import { loadBuffers } from "./Load Buffers";
 import { command } from "./Command";
 
 //
 import { Scene } from "./Start";
+import { generateGPUdata } from "./Generate GPU Data/Generate GPU Data";
+import { UploadBuffer } from "./GPU Aligned Types/GPU Aligned Types"
+import { vec2, vec3, vec4 } from "wgpu-matrix";
 
-
-export class Shader {
-    update = true  // should the shader module be recreated
-    code: string = ""
-    module: GPUShaderModule | undefined
-}
 
 export class Renderer {
+    scene: GPU_Scene = new GPU_Scene;
+
     // Device
     device_found = false
     adapter: GPUAdapter | null | undefined;
@@ -35,11 +34,8 @@ export class Renderer {
     shader_modules = new Map<string, Shader>()
 
     // Buffers
+    upload_buff = new UploadBuffer()
     perspective_matrix_buff: GPUBuffer | undefined
-    uniform_buff: GPUBuffer | undefined
-    
-    vertex_count: number = 0
-    vertex_buff: GPUBuffer | undefined
     
     // Textures
     // 
@@ -51,64 +47,45 @@ export class Renderer {
     descriptor: GPURenderPassDescriptor | any
 }
 
+export class Shader {
+    update = true  // should the shader module be recreated
+    code: string = ""
+    module: GPUShaderModule | undefined
+}
 
-async function findDevice(r: Renderer): Promise<void> {
-    if (r.device_found === true) {
-        return
-    }
+export class GPU_Scene {
+    camera = new GPU_Camera()
+    mesh = new GPU_Mesh()
 
-    const msg = 'need a browser that supports WebGPU';
+    uniform_buff: GPUBuffer | undefined
+}
+
+export class GPU_Camera {
     
-    // Extract
-    r.adapter = await navigator.gpu?.requestAdapter();
-    if (r.adapter === null) {
-        fail("Failed to request adapater");
-    }
-
-    r.device = await r.adapter?.requestDevice();
-    if (!r.device) {
-        fail("Failed to request device");
-    }
-
-    r.gpu_name = `Device: ${r.adapter!.info.device} Vendor: ${r.adapter!.info.vendor} Description: ${r.adapter!.info.description}`;
-    console.log(`GPU Found: ${r.gpu_name}`);
-
-    r.device_found = true
 }
 
-function bindToCanvas(r: Renderer) {
-    if (r.canvas_binded === true) {
-        return
-    }
+export class GPU_Mesh {
+    vertex_count = 0
+    vertex_buff: GPUBuffer | undefined
 
-    if (r.device_found == false) {
-        fail("device not found")
-    }
-
-    r.canvas = document.querySelector('canvas')!;
-    r.context = r.canvas.getContext('webgpu')!;
-    r.presentationFormat = navigator.gpu.getPreferredCanvasFormat();
-
-    // Bind
-    r.context.configure({
-        device: r.device!,
-        format: r.presentationFormat,
-    });
-
-    r.canvas_binded = true
+    pos = vec3.zero()
+    rot_quat = vec4.zero()
 }
 
-export async function render(r: Renderer, scene: Scene) {
+export class GPU_Instance {
+    
+}
+
+export async function render(r: Renderer, cpu_scene: Scene) {
     await findDevice(r)
     bindToCanvas(r)
     createShaderModules(r)
-    createBuffers(r)
-
-    createCachedConfiguration(r)
+    
+    generateGPUdata(r, cpu_scene)
     configurePerspectiveTransform_FixedFunction(90, 2 / 1, 0.1, 1000, r)
-    loadBuffers(r, scene)
+    createCachedConfiguration(r)
 
     command(r)
 }
 
-export { updateShader } from "./Shaders"
+export { requestShaderUpdate as updateShader } from "./Shaders"

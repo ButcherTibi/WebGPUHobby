@@ -32,8 +32,8 @@ export function createCachedConfiguration(r: Renderer) {
             layout: r.pipeline.getBindGroupLayout(0),
             entries: [
                 { binding: 0, resource: { buffer: r.perspective_matrix_buff! }},
-                { binding: 1, resource: { buffer: r.uniform_buff! }},
-                { binding: 2, resource: { buffer: r.vertex_buff! }},
+                { binding: 1, resource: { buffer: r.scene.uniform_buff! }},
+                { binding: 2, resource: { buffer: r.scene.mesh.vertex_buff! }},
             ],
         });
 
