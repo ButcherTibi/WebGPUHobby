@@ -1,5 +1,5 @@
 import { updateShader } from "./Renderer"
-import { renderer } from "./Globals"
+import { glb } from "./Globals"
 
 
 const ShaderCodeRequestType = {
@@ -46,7 +46,7 @@ export async function requestShaderCode_Any() {
 	const res: ShadersCodeResponse = await response.json()
 
 	res.shaders.forEach((shader) => {
-		updateShader(shader.name, shader.code, renderer)
+		updateShader(shader.name, shader.code, glb.renderer)
 	})
 }
 
@@ -68,6 +68,6 @@ export async function requestShaderCode_OnlyLatest() {
 	const res: ShadersCodeResponse = await response.json()
 
 	res.shaders.forEach((shader) => {
-		updateShader(shader.name, shader.code, renderer)
+		updateShader(shader.name, shader.code, glb.renderer)
 	})
 }

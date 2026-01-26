@@ -31,7 +31,7 @@ export class Renderer {
     presentationFormat: GPUTextureFormat | undefined;
 
     // Shaders
-    shader_modules = new Map<string, Shader>()
+    shaders = new Map<string, Shader>()
 
     // Buffers
     upload_buff = new UploadBuffer()

@@ -10,7 +10,7 @@ export function generateGPUdata(r: Renderer, cpu_scene: Scene) {
     r.upload_buff.configureForStruct(3)
     r.upload_buff.setFieldInStruct(0, cpu_scene.camera.screen_width, cpu_scene.camera.screen_height)
     r.upload_buff.setVec3FieldInStruct(1, cpu_scene.camera.pos)
-    r.upload_buff.setVec4FieldInStruct(2, cpu_scene.camera.rot_quat)
+    r.upload_buff.setVec4FieldInStruct(2, cpu_scene.camera._rot_quat)
 
     if (r.scene.uniform_buff == undefined) {
         r.scene.uniform_buff = r.device!.createBuffer({

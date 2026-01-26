@@ -70,7 +70,7 @@ export class UploadBuffer {
         this.stride = field_count * UploadBuffer.field_size
     }
 
-    _setField(item_index: number,  field_index: number,
+    _setField(item_index: number, field_index: number,
         x: number, y: number = flt_undef, z: number = flt_undef, w: number = flt_undef)
     {
         if (this.mem === undefined) {

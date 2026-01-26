@@ -10,11 +10,11 @@ export function requestShaderUpdate(name: string, code: string, r: Renderer) {
         code: code,
         module: undefined
     }
-    r.shader_modules.set(name, shader)
+    r.shaders.set(name, shader)
 }
 
 export function createShaderModules(r: Renderer) {
-    r.shader_modules.forEach((shader, name) => {
+    r.shaders.forEach((shader, name) => {
         if (shader.update) {
             console.log(`Shader ${name} was reloaded`)
             shader.module = r.device!.createShaderModule({

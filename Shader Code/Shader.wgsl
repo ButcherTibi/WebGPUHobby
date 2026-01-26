@@ -45,13 +45,12 @@ struct VSOutput {
 
     var vertex: Vertex = vb.vertices[vs_index];
     var v_world_pos = vertex.pos3_free1.xyz;
-    // v_world_pos.z += 1;
 
     var v_camera_space = v_world_pos - camera_pos;
     v_camera_space = quatRotate(v_camera_space, camera_rot);
 
     var result = VSOutput();
-    result.debug_color = camera_pos;
+    result.debug_color = v_camera_space;
 
     if (camera_pos.z == -999999) {
         result.debug_color.y = 1;
@@ -112,6 +111,7 @@ struct FSInput {
 
 fn quatRotate(v: vec3f, q: vec4f) -> vec3f
 {
+// Original Code From C++ glm (this is a form of optimized quat rotation)
 //	vec < 3, T, Q > const QuatVector( q.x, q.y, q.z);
 //	vec < 3, T, Q > const uv( glm::cross(QuatVector, v));
 //	vec < 3, T, Q > const uuv( glm::cross(QuatVector, uv));

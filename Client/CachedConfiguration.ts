@@ -3,7 +3,7 @@ import type { Renderer } from "./Renderer";
 
 
 function getShader(name: string, r: Renderer): GPUShaderModule {
-    const shader = r.shader_modules.get(name)
+    const shader = r.shaders.get(name)
     if (shader === undefined) {
         fail(`Shader not found: ${name}`)
     }
